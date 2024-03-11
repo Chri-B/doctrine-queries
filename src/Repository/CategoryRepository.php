@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Category;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -44,35 +45,73 @@ class CategoryRepository extends ServiceEntityRepository
      */
     public function findaAllOrdered(): array
     {
-        $dql = "SELECT category from App\Entity\Category as category ORDER BY category.name ASC";
-        $query = $this->getEntityManager()->createQuery($dql);
+        // method 1 - Native query
+        // $dql = "SELECT category from App\Entity\Category as category ORDER BY category.name ASC";
+        // $query = $this->getEntityManager()->createQuery($dql);
         // dd($query->getSQL());
+
+        // method 2 - Query Builder
+        $qb = $this->createQueryBuilder('category')
+        ->addOrderBy('category.name', Criteria::DESC);
+
+        $query = $qb->getQuery();
+
+        // dd($query->getDQL());
 
         return $query->getResult();
     }
 
-//    /**
-//     * @return Category[] Returns an array of Category objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('c.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    /**
+     * @return Category[]
+     */
+    public function search(string $term): array
+    {
+        return $this->createQueryBuilder('category')
+        ->addSelect('fortuneCookie') // adding this join will reduce the number of necessary queries to build the page (N+1 problem)
+        ->leftJoin('category.fortuneCookies', 'fortuneCookie')
+        ->addOrderBy('category.name', Criteria::DESC)
+        ->andWhere('category.name LIKE :term OR category.iconKey LIKE :term OR fortuneCookie.fortune LIKE :term')
+        ->setParameter('term', '%'.$term.'%')
+        ->addOrderBy('category.name', Criteria::DESC)
+        ->getQuery()->getResult();
+    }
 
-//    public function findOneBySomeField($value): ?Category
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    /**
+     * @return Category
+     */
+    public function findWithFortunesJoin(int $id): ?Category
+    {
+        return $this->createQueryBuilder("category")
+        ->select("category")
+        ->addSelect("fortuneCookie")
+        ->leftJoin("category.fortuneCookies", "fortuneCookie")
+        ->andWhere('category.id = :id')
+        ->setParameter("id", $id)
+        ->getQuery()->getOneOrNullResult();
+    }
+
+    //    /**
+    //     * @return Category[] Returns an array of Category objects
+    //     */
+    //    public function findByExampleField($value): array
+    //    {
+    //        return $this->createQueryBuilder('c')
+    //            ->andWhere('c.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->orderBy('c.id', 'ASC')
+    //            ->setMaxResults(10)
+    //            ->getQuery()
+    //            ->getResult()
+    //        ;
+    //    }
+
+    //    public function findOneBySomeField($value): ?Category
+    //    {
+    //        return $this->createQueryBuilder('c')
+    //            ->andWhere('c.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->getQuery()
+    //            ->getOneOrNullResult()
+    //        ;
+    //    }
 }

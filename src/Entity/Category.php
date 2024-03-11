@@ -21,7 +21,7 @@ class Category
     #[ORM\Column(length: 20)]
     private ?string $iconKey = null;
 
-    #[ORM\OneToMany(mappedBy: 'category', targetEntity: FortuneCookie::class)]
+    #[ORM\OneToMany(mappedBy: 'category', targetEntity: FortuneCookie::class, fetch: 'EXTRA_LAZY')] // extra lazy permette di non fetchare tutti i dati ma solamente quelli necessari per popolare il twig (es: solo il count dei fortuneCookies invece di tutti i dati della tabella)
     private Collection $fortuneCookies;
 
     public function __construct()

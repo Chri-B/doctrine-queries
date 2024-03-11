@@ -1,8 +1,8 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-    
-        
+
+
 <h1 class="text-3xl p-5 text-center my-4 font-semibold"><span class="fa {{ category.iconKey }}"></span> {{ category.name }} Fortunes</h1>
 <div class="flex justify-center mb-16 px-4">
     <div>
@@ -13,7 +13,7 @@
                         Fortunes
                     </th>
                     <th class="border p-4">
-                        Print History
+                        Print History ({{ fortunesPrinted|number_format }} total)
                     </th>
                 </tr>
             </thead>
@@ -33,7 +33,7 @@
         <a class="text-slate-700 hover:text-slate-900 font-semibold" href="{{ path('app_homepage') }}"><i class="fa fa-angle-double-left"></i> Back to Fortune Categories</a>
     </div>
 </div>
-    
-        
-    
+
+
+
 {% endblock %}
