@@ -38,13 +38,13 @@ class FortuneController extends AbstractController
             throw $this->createNotFoundException("Category not found!");
         }
 
-        $result = $fortuneCookieRepository->countNumberPrintedForCategory($category);
+        $stats = $fortuneCookieRepository->countNumberPrintedForCategory($category);
 
         return $this->render('fortune/showCategory.html.twig', [
             'category' => $category,
-            'fortunesPrinted' => $result['fortunesPrinted'],
-            'fortunesAverage' => $result['fortunesAverage'],
-            'categoryName' => $result['name'],
+            'fortunesPrinted' => $stats->fortunesPrinted,
+            'fortunesAverage' => $stats->fortunesAvereage,
+            'categoryName' => $stats->categoryName
         ]);
     }
 }

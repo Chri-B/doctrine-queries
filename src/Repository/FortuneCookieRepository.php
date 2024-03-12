@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Category;
 use App\Entity\FortuneCookie;
+use App\Model\CategoryFortuneStats;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -41,10 +42,11 @@ class FortuneCookieRepository extends ServiceEntityRepository
     }
 
     /**
-    * @return Category
+    * @return CategoryFortuneStats
      */
-    public function countNumberPrintedForCategory(Category $category): array
+    public function countNumberPrintedForCategory(Category $category): CategoryFortuneStats
     {
+        /*
         $result = $this->createQueryBuilder("fortuneCookie")
         ->select("SUM(fortuneCookie.numberPrinted) as fortunesPrinted")
         ->addSelect("AVG(fortuneCookie.numberPrinted) fortunesAverage")
@@ -55,34 +57,51 @@ class FortuneCookieRepository extends ServiceEntityRepository
         ->getQuery()
         // ->getSingleScalarResult();
         ->getSingleResult();
+        */
 
-        // dd($result);
+        // usando una classe, possiamo preparare i dati in modo più pulito invece di avere un semplice array associativo
+
+
+        $result = $this->createQueryBuilder("fortuneCookie")
+        ->select(sprintf(
+            "NEW %s(
+                SUM(fortuneCookie.numberPrinted),
+                AVG(fortuneCookie.numberPrinted),
+                category.name
+            )",
+            CategoryFortuneStats::class
+        ))
+        ->innerJoin("fortuneCookie.category", "category") // returns only rows with a match in both tables
+        ->andWhere('fortuneCookie.category = :category')
+        ->setParameter("category", $category)
+        ->getQuery()
+        ->getSingleResult();
 
         return $result;
     }
 
-//    /**
-//     * @return FortuneCookie[] Returns an array of FortuneCookie objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('f')
-//            ->andWhere('f.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('f.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    //    /**
+    //     * @return FortuneCookie[] Returns an array of FortuneCookie objects
+    //     */
+    //    public function findByExampleField($value): array
+    //    {
+    //        return $this->createQueryBuilder('f')
+    //            ->andWhere('f.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->orderBy('f.id', 'ASC')
+    //            ->setMaxResults(10)
+    //            ->getQuery()
+    //            ->getResult()
+    //        ;
+    //    }
 
-//    public function findOneBySomeField($value): ?FortuneCookie
-//    {
-//        return $this->createQueryBuilder('f')
-//            ->andWhere('f.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    //    public function findOneBySomeField($value): ?FortuneCookie
+    //    {
+    //        return $this->createQueryBuilder('f')
+    //            ->andWhere('f.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->getQuery()
+    //            ->getOneOrNullResult()
+    //        ;
+    //    }
 }
