@@ -46,7 +46,10 @@ class CategoryRepository extends ServiceEntityRepository
      */
     public function findaAllOrdered(): array
     {
-        $query = $this->addOrderByCategoryName()->getQuery();
+        $qb = $this->addGroupByCategoryAndCountFortunes()
+        ->addOrderBy('category.name', Criteria::ASC);
+
+        $query = $qb->getQuery();
 
         return $query->getResult();
     }
@@ -56,11 +59,11 @@ class CategoryRepository extends ServiceEntityRepository
      */
     public function search(string $term): array
     {
-        $qb = $this->addOrderByCategoryName();
-
         $listTerm = explode(" ", $term);
 
-        return $this->addFortuneCookieJoinAndSelect($qb)
+        $qb = $this->addOrderByCategoryName();
+
+        return $this->addGroupByCategoryAndCountFortunes($qb)
         ->andWhere('category.name LIKE :term OR category.name IN (:listTerm) OR category.iconKey LIKE :term OR fortuneCookie.fortune LIKE :term')
         ->setParameter('term', '%'.$term.'%')
         ->setParameter('listTerm', $listTerm)
@@ -92,6 +95,14 @@ class CategoryRepository extends ServiceEntityRepository
     {
         return ($qb ?? $this->createQueryBuilder("category"))
             ->addOrderBy('category.name', Criteria::ASC);
+    }
+
+    private function addGroupByCategoryAndCountFortunes(QueryBuilder $qb = null): QueryBuilder
+    {
+        return ($qb ?? $this->createQueryBuilder("category"))
+            ->addSelect("COUNT(fortuneCookie.id) AS fortuneCookiesTotal")
+            ->leftJoin("category.fortuneCookies", 'fortuneCookie')
+            ->addGroupBy('category.id');
     }
 
     //    /**
