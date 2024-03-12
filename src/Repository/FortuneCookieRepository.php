@@ -6,6 +6,7 @@ use App\Entity\Category;
 use App\Entity\FortuneCookie;
 use App\Model\CategoryFortuneStats;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -41,11 +42,19 @@ class FortuneCookieRepository extends ServiceEntityRepository
         }
     }
 
+    public static function createFortuneCookiesStillInProductionCriteria(): Criteria
+    {
+        // uso una static function perchè così è chiamabile dalla entity
+        return Criteria::create()
+        ->andWhere(Criteria::expr()->eq('discontinued', false));
+    }
+
     /**
     * @return CategoryFortuneStats
      */
     public function countNumberPrintedForCategory(Category $category): CategoryFortuneStats
     {
+        // method 1 - qb e return array associativo
         /*
         $result = $this->createQueryBuilder("fortuneCookie")
         ->select("SUM(fortuneCookie.numberPrinted) as fortunesPrinted")
@@ -62,7 +71,8 @@ class FortuneCookieRepository extends ServiceEntityRepository
         // usando una classe, possiamo preparare i dati in modo più pulito invece di avere un semplice array associativo
 
 
-        $result = $this->createQueryBuilder("fortuneCookie")
+        // method 2 - qb e return classe
+        /*$result = $this->createQueryBuilder("fortuneCookie")
         ->select(sprintf(
             "NEW %s(
                 SUM(fortuneCookie.numberPrinted),
@@ -76,6 +86,21 @@ class FortuneCookieRepository extends ServiceEntityRepository
         ->setParameter("category", $category)
         ->getQuery()
         ->getSingleResult();
+        */
+
+        // method 3 - raw query e class
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT SUM(fortune_cookie.number_printed) AS fortunesPrinted, AVG(fortune_cookie.number_printed) fortunesAverage, category.name AS categoryName FROM fortune_cookie INNER JOIN category ON category.id = fortune_cookie.category_id WHERE fortune_cookie.category_id = :category';
+
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery([
+            'category' => $category->getId() // è possibile anche passare il parametro così: $stmt->bindValue('category', $category->getId());
+        ]);
+
+        // dd($result->fetchAssociative());
+
+        return new CategoryFortuneStats(...$result->fetchAssociative()); // spread operator
+
 
         return $result;
     }

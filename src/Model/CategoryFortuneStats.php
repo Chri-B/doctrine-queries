@@ -6,7 +6,7 @@ class CategoryFortuneStats
 {
     public function __construct(
         public int $fortunesPrinted,
-        public int $fortunesAvereage,
+        public int $fortunesAverage,
         public string $categoryName
     ) {
 
